@@ -1,0 +1,131 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 2rem;
+  min-height: 100vh;
+  max-width: 1200px;
+  margin: 64px auto 0; /* Added top margin to account for fixed header */
+  font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: white;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.title {
+  font-size: 2.5rem;
+  color: #13AA52;
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  color: #495057;
+  font-weight: 400;
+}
+
+.searchBarContainer {
+  position: relative;
+  z-index: 1000;
+  margin-bottom: 1rem;
+  width: 100%;
+  max-width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.cardContainer {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  width: calc(33.333% - 1rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: transform 0.3s ease-in-out;
+}
+
+/* .card:hover {
+  transform: translateY(-5px);
+} */
+
+.icon {
+  font-size: 2rem;
+  color: #13AA52;
+  margin-bottom: 1rem;
+}
+
+.card h2 {
+  color: #13AA52;
+  margin-bottom: 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.card p, .card ul {
+  font-size: 0.9rem;
+  color: #495057;
+  text-align: left;
+}
+
+.card ul {
+  padding-left: 1.25rem;
+  margin-top: 0.5rem;
+}
+
+.card li {
+  margin-bottom: 0.25rem;
+}
+
+.footer {
+  margin-top: 2rem;
+  text-align: center;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.footer a {
+  color: #13AA52;
+  text-decoration: none;
+}
+
+.footer a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .container {
+    margin-top: 0; /* Remove top margin on mobile as header is not fixed */
+    padding: 1rem;
+  }
+
+  .title {
+    font-size: 2rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+  }
+
+  .cardContainer {
+    flex-direction: column;
+  }
+
+  .card {
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+}
