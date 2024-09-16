@@ -59,13 +59,16 @@ export default function SearchPage() {
         height={200}
       />
       <Box sx={{ width: '100%', maxWidth: '800px', mt: 4 }}>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Box>
           <Tabs 
             value={value} 
             onChange={handleChange} 
             aria-label="search categories"
             centered
-            sx={{ '& .MuiTabs-flexContainer': { justifyContent: 'center' } }}
+            sx={{ 
+              '& .MuiTabs-flexContainer': { justifyContent: 'center' },
+              '& .MuiTabs-indicator': { backgroundColor: '#1976d2' } // Keeps the indicator line
+            }}
           >
             {categories.map((category, index) => (
               <Tab key={category.name} label={category.name} {...a11yProps(index)} />
