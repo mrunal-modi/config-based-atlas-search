@@ -1,7 +1,7 @@
 import customAxios from './customAxios';
-import { parse, stringify } from 'yaml';
+import { parse } from 'yaml';
 import { SearchResult, PaginatedResponse, SearchConfig, InsertOneResult, UpdateResult, DeleteResult } from '../types/search';
-import searchConfigs, { ConfigType } from '@/config/searchConfigs';
+import { ConfigType } from '@/config/searchConfigs';
 
 export const search = async (
   config: SearchConfig,
@@ -11,8 +11,6 @@ export const search = async (
   configType: ConfigType
 ): Promise<PaginatedResponse> => {
   try {
-    console.log('Search function called with:', { config, query, page, pageSize, configType });
-    
     const params: any = {
       q: query,
       page,
@@ -20,26 +18,19 @@ export const search = async (
       configType,
     };
 
-    console.log('Sending request to:', config.searchEndpoint);
-    console.log('With params:', params);
-
-    const response = await customAxios.get<PaginatedResponse>(config.searchEndpoint, { params });
+    const response = await customAxios.get<PaginatedResponse>('/api/documents', { params });
     
-    console.log('Received response:', response.data);
-
     return response.data;
   } catch (error: any) {
     console.error('Error in search:', error);
-    console.error('Error details:', error.response?.data);
     throw new Error(error.response?.data?.error || 'An error occurred while performing the search');
   }
 };
 
 export const findOne = async (config: SearchConfig, id: string): Promise<SearchResult> => {
   try {
-    const response = await customAxios.get<{ result: SearchResult }>(config.findOneEndpoint, {
+    const response = await customAxios.get<{ result: SearchResult }>(`/api/documents/${id}`, {
       params: {
-        id,
         selectedDatabase: config.database,
         collection: config.collection,
         idField: config.idField,
@@ -64,7 +55,7 @@ export const _insertOne = async (config: SearchConfig, document: any): Promise<I
       }
     }
 
-    const response = await customAxios.post<{ result: InsertOneResult }>('/api/insertOne', {
+    const response = await customAxios.post<{ result: InsertOneResult }>('/api/documents', {
       selectedDatabase: config.database,
       collection: config.collection,
       document
@@ -82,12 +73,10 @@ export const _updateOne = async (
   update: Record<string, any>
 ): Promise<UpdateResult> => {
   try {
-    // Remove _id from the update object if present
     if (update._id) {
       delete update._id;
     }
 
-    // Parse YAML if present
     if (update.yaml && typeof update.yaml === 'string') {
       try {
         update.yaml = parse(update.yaml);
@@ -97,10 +86,14 @@ export const _updateOne = async (
       }
     }
 
-    const response = await customAxios.put<{ result: UpdateResult }>('/api/updateOne', { 
+    // Ensure isPublic is a boolean
+    if ('isPublic' in update) {
+      update.isPublic = update.isPublic === true || update.isPublic === 'true';
+    }
+
+    const response = await customAxios.put<{ result: UpdateResult }>(`/api/documents/${id}`, { 
       selectedDatabase: config.database, 
       collection: config.collection, 
-      id, 
       update
     });
 
@@ -116,11 +109,10 @@ export const _deleteOne = async (
   id: string
 ): Promise<DeleteResult> => {
   try {
-    const response = await customAxios.delete<{ result: DeleteResult }>('/api/deleteOne', {
+    const response = await customAxios.delete<{ result: DeleteResult }>(`/api/documents/${id}`, {
       data: {
         selectedDatabase: config.database,
-        collection: config.collection,
-        id
+        collection: config.collection
       }
     });
     return response.data.result;
