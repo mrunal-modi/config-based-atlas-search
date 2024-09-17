@@ -21,10 +21,16 @@ import {
   TypographyProps,
   IconButton,
   Tooltip,
-  Alert
+  Alert,
+  Chip,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { Delete as DeleteIcon, FileCopy as CopyIcon } from '@mui/icons-material';
+import {
+  Delete as DeleteIcon,
+  FileCopy as CopyIcon,
+  Email as EmailIcon,
+  Public as PublicIcon,
+} from '@mui/icons-material';
 
 const StyledLink = styled(Link)(({ theme }) => ({
   textDecoration: 'none',
@@ -137,7 +143,7 @@ function SearchResultsContent() {
       const titleField = config.searchResultsSummaryFields[0] || 'title';
       documentToCopy[titleField] = `${documentToCopy[titleField]} (COPY)`;
       const insertResult: InsertOneResult = await _insertOne(config, documentToCopy);
-      
+
       if (results && insertResult.insertedId) {
         const newResultItem = {
           ...documentToCopy,
@@ -189,10 +195,63 @@ function SearchResultsContent() {
         </Typography>
         <List>
           {results.results.map((result) => (
+
             <StyledListItem key={result[config.idField]}>
               <StyledLink href={`${config.searchResultDetailPath.replace(':id', result[config.idField])}?configType=${configType}`}>
                 <StyledPaper elevation={0}>
-                  {config.searchResultsSummaryFields.map((field) => (
+                  <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
+                    <Typography variant="h6" component="h2">
+                      {renderFieldValue(result, config.searchResultsSummaryFields[0])}
+                    </Typography>
+                    <Box display="flex" alignItems="center">
+                      {result.isPublic && (
+                        <Tooltip title="This document is public">
+                          <Chip
+                            icon={<PublicIcon fontSize="small" sx={{ color: 'white' }} />}
+                            label="Public"
+                            size="small"
+                            sx={{
+                              mr: 1,
+                              backgroundColor: 'var(--theme-background-color)',
+                              color: 'white',
+                              '& .MuiChip-icon': {
+                                color: 'white',
+                              },
+                            }}
+                          />
+                        </Tooltip>
+                      )}
+                      {result.userEmail && (
+                        <Tooltip title={`Contact Author: ${result.userEmail}`}>
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              window.location.href = `mailto:${result.userEmail}`;
+                            }}
+                          >
+                            <EmailIcon fontSize="small" sx={{ color: 'var(--theme-background-color)' }} />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                      {user && (
+                        <>
+                          <Tooltip title="Copy document">
+                            <IconButton onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleCopy(result); }} size="small">
+                              <CopyIcon fontSize="small" sx={{ color: 'var(--theme-background-color)' }} />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Delete document">
+                            <IconButton onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDelete(result[config.idField]); }} size="small">
+                              <DeleteIcon fontSize="small" sx={{ color: 'var(--theme-background-color)' }} />
+                            </IconButton>
+                          </Tooltip>
+                        </>
+                      )}
+                    </Box>
+                  </Box>
+                  {config.searchResultsSummaryFields.slice(1).map((field) => (
                     <Box key={field} mb={1}>
                       <Typography variant="body2" sx={{ color: 'var(--theme-background-color)', fontWeight: 600 }}>
                         {field}:
@@ -204,21 +263,9 @@ function SearchResultsContent() {
                   ))}
                 </StyledPaper>
               </StyledLink>
-              {user && (
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
-                  <Tooltip title="Copy document">
-                    <StyledIconButton onClick={() => handleCopy(result)} size="small">
-                      <CopyIcon />
-                    </StyledIconButton>
-                  </Tooltip>
-                  <Tooltip title="Delete document">
-                    <StyledIconButton onClick={() => handleDelete(result[config.idField])} size="small">
-                      <DeleteIcon />
-                    </StyledIconButton>
-                  </Tooltip>
-                </Box>
-              )}
             </StyledListItem>
+
+
           ))}
         </List>
         <Box display="flex" justifyContent="center" mt={4}>
