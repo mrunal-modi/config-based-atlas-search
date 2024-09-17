@@ -1,4 +1,5 @@
 // src/components/SearchContent/SearchResults.tsx
+import { useUser } from '@auth0/nextjs-auth0/client';
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -73,6 +74,7 @@ const StyledIconButton = styled(IconButton)(({ theme }) => ({
 }));
 
 const SearchResultsInner: React.FC<SearchResultsProps> = ({ config, configType }) => {
+  const { user, isLoading: userLoading } = useUser();
   const searchParams = useSearchParams();
   const router = useRouter();
   const query = searchParams?.get(config.searchQueryParam);
@@ -86,6 +88,7 @@ const SearchResultsInner: React.FC<SearchResultsProps> = ({ config, configType }
       if (query) {
         try {
           setLoading(true);
+          setError(null);
           const searchResults = await search(config, query, page, config.defaultPageSize, configType);
           setResults(searchResults);
         } catch (error) {
@@ -103,6 +106,10 @@ const SearchResultsInner: React.FC<SearchResultsProps> = ({ config, configType }
   }, [query, page, config, configType]);
 
   const handleDelete = async (id: string) => {
+    if (!user) {
+      setError('You must be logged in to delete documents');
+      return;
+    }
     if (window.confirm('Are you sure you want to delete this document?')) {
       try {
         await _deleteOne(config, id);
@@ -122,6 +129,10 @@ const SearchResultsInner: React.FC<SearchResultsProps> = ({ config, configType }
   };
 
   const handleCopy = async (result: SearchResult) => {
+    if (!user) {
+      setError('You must be logged in to copy documents');
+      return;
+    }
     try {
       const { _id, ...documentToCopy } = result;
       const titleField = config.searchResultsSummaryFields[0] || 'title';
@@ -163,8 +174,8 @@ const SearchResultsInner: React.FC<SearchResultsProps> = ({ config, configType }
     return String(value);
   };
 
-  if (loading) return <CircularProgress sx={{ color: 'var(--theme-background-color)' }} />;
-  if (error) return <Typography color="error">{error}</Typography>;
+  if (loading || userLoading) return <CircularProgress sx={{ color: 'var(--theme-background-color)' }} />;
+  if (error) return <Alert severity="error">{error}</Alert>;
   if (!query) return <Typography>No search query provided</Typography>;
   if (!results || !results.results || results.results.length === 0) return <Typography>No results found for &quot;{query}&quot;</Typography>;
 
@@ -194,18 +205,20 @@ const SearchResultsInner: React.FC<SearchResultsProps> = ({ config, configType }
                   ))}
                 </StyledPaper>
               </StyledLink>
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
-                <Tooltip title="Copy document">
-                  <StyledIconButton onClick={() => handleCopy(result)} size="small">
-                    <CopyIcon />
-                  </StyledIconButton>
-                </Tooltip>
-                <Tooltip title="Delete document">
-                  <StyledIconButton onClick={() => handleDelete(result[config.idField])} size="small">
-                    <DeleteIcon />
-                  </StyledIconButton>
-                </Tooltip>
-              </Box>
+              {user && (
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+                  <Tooltip title="Copy document">
+                    <StyledIconButton onClick={() => handleCopy(result)} size="small">
+                      <CopyIcon />
+                    </StyledIconButton>
+                  </Tooltip>
+                  <Tooltip title="Delete document">
+                    <StyledIconButton onClick={() => handleDelete(result[config.idField])} size="small">
+                      <DeleteIcon />
+                    </StyledIconButton>
+                  </Tooltip>
+                </Box>
+              )}
             </StyledListItem>
           ))}
         </List>
