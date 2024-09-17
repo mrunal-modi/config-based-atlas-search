@@ -46,8 +46,6 @@ const db3Config = {
   debounceTime: 300,
   defaultPageSize: 10,
   maxPageSize: 50,
-  searchEndpoint: '/api/search',
-  findOneEndpoint: '/api/findOne',
   searchResultsPaginatedPage: '/result',
   searchResultDetailPath: '/result/:id',
   searchQueryParam: 'q',

@@ -33,8 +33,6 @@ export interface SearchConfig {
   debounceTime: number;
   defaultPageSize: number;
   maxPageSize: number;
-  searchEndpoint: string;
-  findOneEndpoint: string;
   searchResultsPaginatedPage: string;
   searchResultDetailPath: string;
   searchQueryParam: string;
