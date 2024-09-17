@@ -112,18 +112,10 @@ export async function GET(request: NextRequest) {
       const { results, totalCount } = result[0];
       const totalPages = Math.ceil(totalCount / validPageSize);
 
-      const sanitizedResults = results.map((doc: any) => {
-        if (!userId) {
-          const { userId, userEmail, ...rest } = doc;
-          return rest;
-        }
-        return doc;
-      });
-
       console.log('Returning results:', { totalCount, currentPage: validPage, totalPages, pageSize: validPageSize });
 
       return NextResponse.json({
-        results: sanitizedResults,
+        results,
         totalCount,
         currentPage: validPage,
         totalPages,
