@@ -1,3 +1,4 @@
+// src/components/SearchContent/SearchResults.tsx
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -64,6 +65,13 @@ const StyledButton = styled(Button)({
   },
 });
 
+const StyledIconButton = styled(IconButton)(({ theme }) => ({
+  color: 'var(--theme-background-color)',
+  '&:hover': {
+    backgroundColor: 'rgba(var(--theme-background-color-rgb), 0.04)',
+  },
+}));
+
 const SearchResultsInner: React.FC<SearchResultsProps> = ({ config, configType }) => {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -98,7 +106,6 @@ const SearchResultsInner: React.FC<SearchResultsProps> = ({ config, configType }
     if (window.confirm('Are you sure you want to delete this document?')) {
       try {
         await _deleteOne(config, id);
-        // Remove the deleted item from the current results
         if (results) {
           const updatedResults = {
             ...results,
@@ -116,17 +123,11 @@ const SearchResultsInner: React.FC<SearchResultsProps> = ({ config, configType }
 
   const handleCopy = async (result: SearchResult) => {
     try {
-      // Remove the _id field from the copied document
       const { _id, ...documentToCopy } = result;
-  
-      // Add (COPY) suffix to the title or name field
-      // Assuming the title field is 'title', adjust this if it's different in your config
       const titleField = config.searchResultsSummaryFields[0] || 'title';
       documentToCopy[titleField] = `${documentToCopy[titleField]} (COPY)`;
-  
       const insertResult: InsertOneResult = await _insertOne(config, documentToCopy);
       
-      // Add the new document to the current results
       if (results && insertResult.insertedId) {
         const newResultItem = {
           ...documentToCopy,
@@ -195,14 +196,14 @@ const SearchResultsInner: React.FC<SearchResultsProps> = ({ config, configType }
               </StyledLink>
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
                 <Tooltip title="Copy document">
-                  <IconButton onClick={() => handleCopy(result)} size="small">
+                  <StyledIconButton onClick={() => handleCopy(result)} size="small">
                     <CopyIcon />
-                  </IconButton>
+                  </StyledIconButton>
                 </Tooltip>
                 <Tooltip title="Delete document">
-                  <IconButton onClick={() => handleDelete(result[config.idField])} size="small">
+                  <StyledIconButton onClick={() => handleDelete(result[config.idField])} size="small">
                     <DeleteIcon />
-                  </IconButton>
+                  </StyledIconButton>
                 </Tooltip>
               </Box>
             </StyledListItem>

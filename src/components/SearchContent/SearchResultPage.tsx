@@ -1,3 +1,4 @@
+// src/components/SearchContent/SearchResultPage.tsx
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
@@ -19,6 +20,7 @@ import {
   Container,
   Alert,
   styled,
+  Tooltip
 } from '@mui/material';
 import {
   Save as SaveIcon,
@@ -283,30 +285,38 @@ const SearchResultPage: React.FC<SearchResultPageProps> = ({ config, configType 
 
           {isAdmin && (
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-              <StyledIconButton
-                onClick={isEditing ? handleCancel : handleEdit}
-                size="small"
-              >
-                {isEditing ? <CancelIcon /> : <EditIcon />}
-              </StyledIconButton>
-              {isEditing && (
-                <StyledIconButton onClick={handleSave} size="small">
-                  <SaveIcon />
+              <Tooltip title={isEditing ? "Cancel editing" : "Edit document"}>
+                <StyledIconButton
+                  onClick={isEditing ? handleCancel : handleEdit}
+                  size="small"
+                >
+                  {isEditing ? <CancelIcon /> : <EditIcon />}
                 </StyledIconButton>
+              </Tooltip>
+              {isEditing && (
+                <Tooltip title="Save changes">
+                  <StyledIconButton onClick={handleSave} size="small">
+                    <SaveIcon />
+                  </StyledIconButton>
+                </Tooltip>
               )}
-              <StyledIconButton
-                onClick={handleCopyDocument}
-                disabled={isCopying}
-                size="small"
-              >
-                <CopyIcon />
-              </StyledIconButton>
-              <StyledIconButton 
-                onClick={handleDeleteDocument} 
-                size="small"
-              >
-                <DeleteIcon />
-              </StyledIconButton>
+              <Tooltip title="Copy document">
+                <StyledIconButton
+                  onClick={handleCopyDocument}
+                  disabled={isCopying}
+                  size="small"
+                >
+                  <CopyIcon />
+                </StyledIconButton>
+              </Tooltip>
+              <Tooltip title="Delete document">
+                <StyledIconButton 
+                  onClick={handleDeleteDocument} 
+                  size="small"
+                >
+                  <DeleteIcon />
+                </StyledIconButton>
+              </Tooltip>
             </Box>
           )}
 
