@@ -1,8 +1,8 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { search } from '../../lib/services';
-import { SearchConfig, SearchResult, PaginatedResponse } from '../../types/search';
+import { search, _deleteOne, _insertOne } from '../../lib/services';
+import { SearchConfig, SearchResult, PaginatedResponse, InsertOneResult } from '../../types/search';
 import { ConfigType } from '@/config/searchConfigs';
 import {
   Container,
@@ -16,8 +16,11 @@ import {
   Pagination,
   PaginationItem,
   TypographyProps,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { Delete as DeleteIcon, FileCopy as CopyIcon } from '@mui/icons-material';
 
 interface SearchResultsProps {
   config: SearchConfig;
@@ -91,6 +94,57 @@ const SearchResultsInner: React.FC<SearchResultsProps> = ({ config, configType }
     fetchResults();
   }, [query, page, config, configType]);
 
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this document?')) {
+      try {
+        await _deleteOne(config, id);
+        // Remove the deleted item from the current results
+        if (results) {
+          const updatedResults = {
+            ...results,
+            results: results.results.filter(item => item[config.idField] !== id),
+            totalCount: results.totalCount - 1
+          };
+          setResults(updatedResults);
+        }
+      } catch (error) {
+        console.error('Error deleting document:', error);
+        setError('An error occurred while deleting the document');
+      }
+    }
+  };
+
+  const handleCopy = async (result: SearchResult) => {
+    try {
+      // Remove the _id field from the copied document
+      const { _id, ...documentToCopy } = result;
+  
+      // Add (COPY) suffix to the title or name field
+      // Assuming the title field is 'title', adjust this if it's different in your config
+      const titleField = config.searchResultsSummaryFields[0] || 'title';
+      documentToCopy[titleField] = `${documentToCopy[titleField]} (COPY)`;
+  
+      const insertResult: InsertOneResult = await _insertOne(config, documentToCopy);
+      
+      // Add the new document to the current results
+      if (results && insertResult.insertedId) {
+        const newResultItem = {
+          ...documentToCopy,
+          [config.idField]: insertResult.insertedId
+        };
+        const updatedResults = {
+          ...results,
+          results: [newResultItem, ...results.results],
+          totalCount: results.totalCount + 1
+        };
+        setResults(updatedResults);
+      }
+    } catch (error) {
+      console.error('Error copying document:', error);
+      setError('An error occurred while copying the document');
+    }
+  };
+
   const handlePageChange = (event: React.ChangeEvent<unknown>, newPage: number) => {
     const newUrl = `${config.searchResultsPaginatedPage}?${config.searchQueryParam}=${encodeURIComponent(query || '')}&page=${newPage}&configType=${configType}`;
     router.push(newUrl);
@@ -116,9 +170,9 @@ const SearchResultsInner: React.FC<SearchResultsProps> = ({ config, configType }
   return (
     <Container maxWidth="md">
       <Box my={4} pb={10}>
-      <StyledTypography variant="h5" component="h1" gutterBottom>
-  Search Results for &quot;{query}&quot;
-</StyledTypography>
+        <StyledTypography variant="h5" component="h1" gutterBottom>
+          Search Results for &quot;{query}&quot;
+        </StyledTypography>
         <Typography variant="subtitle1" gutterBottom>
           {results.totalCount} result(s) found
         </Typography>
@@ -139,6 +193,18 @@ const SearchResultsInner: React.FC<SearchResultsProps> = ({ config, configType }
                   ))}
                 </StyledPaper>
               </StyledLink>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+                <Tooltip title="Copy document">
+                  <IconButton onClick={() => handleCopy(result)} size="small">
+                    <CopyIcon />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Delete document">
+                  <IconButton onClick={() => handleDelete(result[config.idField])} size="small">
+                    <DeleteIcon />
+                  </IconButton>
+                </Tooltip>
+              </Box>
             </StyledListItem>
           ))}
         </List>
