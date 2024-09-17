@@ -43,7 +43,7 @@ const StyledLink = styled(Link)(({ theme }) => ({
 }));
 
 const StyledListItem = styled(ListItem)(({ theme }) => ({
-  marginBottom: theme.spacing(2),
+  marginBottom: theme.spacing(0.8),
   padding: 0,
   borderRadius: theme.shape.borderRadius,
   border: '1px solid var(--theme-border-color)',
@@ -51,7 +51,7 @@ const StyledListItem = styled(ListItem)(({ theme }) => ({
 }));
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(2),
+  padding: theme.spacing(0.8),
   width: '100%',
   height: '100%',
   boxSizing: 'border-box',
@@ -59,7 +59,18 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
 
 const StyledTypography = styled(Typography)<TypographyProps>({
   color: 'var(--theme-background-color)',
+  fontSize: '1rem', // Reduced font size for content titles
+  fontWeight: 600, // Make it slightly bold to stand out
 });
+
+const StyledBodyTypography = styled(Typography)({
+  fontSize: '0.8rem', // Small font size for body text
+});
+
+const StyledTitleTypography = styled(Typography)(({ theme }) => ({
+  fontSize: '0.9rem',
+  marginBottom: theme.spacing(1),
+}));
 
 const StyledButton = styled(Button)({
   backgroundColor: 'var(--theme-background-color)',
@@ -68,13 +79,6 @@ const StyledButton = styled(Button)({
     backgroundColor: 'var(--theme-border-color)',
   },
 });
-
-const StyledIconButton = styled(IconButton)(({ theme }) => ({
-  color: 'var(--theme-background-color)',
-  '&:hover': {
-    backgroundColor: 'rgba(var(--theme-background-color-rgb), 0.04)',
-  },
-}));
 
 function SearchResultsContent() {
   const { user, isLoading: userLoading } = useUser();
@@ -187,12 +191,12 @@ function SearchResultsContent() {
   return (
     <Container maxWidth="md">
       <Box my={4} pb={10}>
-        <StyledTypography variant="h5" component="h1" gutterBottom>
+        <StyledTypography variant="h6" component="h1" gutterBottom>
           Search Results for &quot;{query}&quot;
         </StyledTypography>
-        <Typography variant="subtitle1" gutterBottom>
+        <StyledBodyTypography variant="subtitle2" gutterBottom>
           {results.totalCount} result(s) found
-        </Typography>
+        </StyledBodyTypography>
         <List>
           {results.results.map((result) => (
 
@@ -200,9 +204,9 @@ function SearchResultsContent() {
               <StyledLink href={`${config.searchResultDetailPath.replace(':id', result[config.idField])}?configType=${configType}`}>
                 <StyledPaper elevation={0}>
                   <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
-                    <Typography variant="h6" component="h2">
+                    <StyledTitleTypography variant="h5">
                       {renderFieldValue(result, config.searchResultsSummaryFields[0])}
-                    </Typography>
+                    </StyledTitleTypography>
                     <Box display="flex" alignItems="center">
                       {result.isPublic && (
                         <Tooltip title="This document is public">
@@ -221,20 +225,7 @@ function SearchResultsContent() {
                           />
                         </Tooltip>
                       )}
-                      {result.userEmail && (
-                        <Tooltip title={`Contact Author: ${result.userEmail}`}>
-                          <IconButton
-                            size="small"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              window.location.href = `mailto:${result.userEmail}`;
-                            }}
-                          >
-                            <EmailIcon fontSize="small" sx={{ color: 'var(--theme-background-color)' }} />
-                          </IconButton>
-                        </Tooltip>
-                      )}
+
                       {user && (
                         <>
                           <Tooltip title="Copy document">
@@ -249,18 +240,34 @@ function SearchResultsContent() {
                           </Tooltip>
                         </>
                       )}
+
+                      {result.userEmail && (
+                        <Tooltip title={`Contact Author: ${result.userEmail}`}>
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              window.location.href = `mailto:${result.userEmail}`;
+                            }}
+                          >
+                            <EmailIcon fontSize="small" sx={{ color: 'var(--theme-background-color)' }} />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+
                     </Box>
                   </Box>
                   {config.searchResultsSummaryFields.slice(1).map((field) => (
-                    <Box key={field} mb={1}>
-                      <Typography variant="body2" sx={{ color: 'var(--theme-background-color)', fontWeight: 600 }}>
-                        {field}:
-                      </Typography>
-                      <Typography variant="body1">
-                        {renderFieldValue(result, field)}
-                      </Typography>
-                    </Box>
-                  ))}
+  <Box key={field} mb={0.5}>
+    <StyledBodyTypography variant="body2" sx={{ color: 'var(--theme-background-color)', fontWeight: 600 }}>
+      {field}:
+    </StyledBodyTypography>
+    <StyledBodyTypography variant="body2">
+      {renderFieldValue(result, field)}
+    </StyledBodyTypography>
+  </Box>
+))}
                 </StyledPaper>
               </StyledLink>
             </StyledListItem>
