@@ -1,9 +1,10 @@
+// src/app/(view)/result/[id]/page.tsx
 "use client";
 
 import React, { Suspense, Component, ErrorInfo, ReactNode, useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useParams, useRouter } from 'next/navigation';
 import { useUser } from '@auth0/nextjs-auth0/client';
-import { findOne, _updateOne, _insertOne, _deleteOne } from '@/lib/services';
+import { getDocument, updateDocument, deleteDocument, duplicateDocument } from '@/lib/services';
 import searchConfigs, { ConfigType } from '@/config/searchConfigs';
 import { SearchConfig, Document } from '@/types/search';
 import { DynamicDocumentWithId, DynamicDocumentWithRequiredId } from '@/types/document';
@@ -186,7 +187,7 @@ function DetailResultPageContent() {
 
   const loadDocument = async (documentId: string) => {
     try {
-      const result = await findOne(config, documentId);
+      const result = await getDocument(config, documentId);
       if (result) {
         setDocument(result as Document);
         setError(null);
@@ -245,7 +246,7 @@ function DetailResultPageContent() {
       };
       const { _id, ...updateData } = updatedDocument;
 
-      await _updateOne(config, _id.toString(), updateData);
+      await updateDocument(config, _id.toString(), updateData);
 
       setDocument(updatedDocument);
       setIsEditing(false);
@@ -260,36 +261,12 @@ function DetailResultPageContent() {
 
   const handleCopyDocument = async () => {
     try {
-      if (!document) return;
+      if (!document || !document._id) return;
       setIsCopying(true);
-      const { _id, ...docData } = document;
-      const titleField = config.searchResultsSuggestionsField;
-      const originalTitle = docData[titleField] || 'Untitled';
-
-      const copyRegex = /\(Copy (\d+)\)$/;
-      const match = originalTitle.match(copyRegex);
-      let copyNumber = 1;
-      if (match) {
-        copyNumber = parseInt(match[1]) + 1;
-      }
-      docData[titleField] = `${originalTitle}${match ? '' : ' '}(Copy ${copyNumber})`;
-
-      if (user) {
-        docData.userId = user.sub;
-        docData.userEmail = user.email;
-      }
-
-      const result = await _insertOne(config, docData);
-      if (result.insertedId) {
-        const newDocument = await findOne(config, result.insertedId);
-        if (newDocument) {
-          setDocument(newDocument as Document);
-          setEditState({});
-          router.push(`/result/${result.insertedId}?configType=${configType}`);
-          setSuccess('Document copied successfully');
-        } else {
-          setError('New document created but not immediately available. Please refresh the page.');
-        }
+      const newDocument = await duplicateDocument(config, document._id.toString());
+      if (newDocument && newDocument._id) {
+        router.push(`/result/${newDocument._id}?configType=${configType}`);
+        setSuccess('Document copied successfully');
       } else {
         setError('Failed to create a copy of the document');
       }
@@ -304,7 +281,7 @@ function DetailResultPageContent() {
   const handleDeleteDocument = useCallback(async () => {
     if (!document || !document._id) return;
     try {
-      await _deleteOne(config, document._id.toString());
+      await deleteDocument(config, document._id.toString());
       router.push('/');
       setSuccess('Document deleted successfully');
     } catch (error: any) {

@@ -1,49 +1,45 @@
+// Individual document operations
+// /src/app/api/documents/[id]/route.ts
+
+// GET: Retrieves a single document
+// PUT: Updates a document
+// DELETE: Deletes a document
+// services: getDocument, updateDocument, deleteDocument
+
 import { NextRequest, NextResponse } from 'next/server';
 import { ObjectId } from 'mongodb';
 import dbConnect from '@/lib/dbConnect';
 import { authMiddleware } from '@/lib/authMiddleware';
+import { generateSlug } from '@/utils/slugGenerator';
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+  const authResponse = await authMiddleware(request);
+  if (authResponse.status === 401) {
+    return authResponse;
+  }
+
   const { searchParams } = new URL(request.url);
-  const id = params.id;
   const selectedDatabase = searchParams.get('selectedDatabase');
   const collection = searchParams.get('collection');
   const idField = searchParams.get('idField') || '_id';
   const projection = searchParams.get('projection');
-  const publicOnly = searchParams.get('publicOnly') === 'true';
 
-  if (!id || !selectedDatabase || !collection) {
+  if (!params.id || !selectedDatabase || !collection) {
     return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
   }
 
   try {
     const { db } = await dbConnect(selectedDatabase);
     const coll = db.collection(collection);
+    const userId = (request as any).userId;
 
     let filter: any = {};
     if (idField === '_id') {
-      filter._id = new ObjectId(id);
+      filter._id = new ObjectId(params.id);
     } else {
-      filter[idField] = id;
+      filter[idField] = params.id;
     }
-
-    let userId: string | undefined;
-    if (!publicOnly) {
-      try {
-        const authResponse = await authMiddleware(request);
-        if (authResponse.status !== 401) {
-          userId = (request as any).userId;
-        }
-      } catch (error) {
-        console.log('Auth failed, searching only public documents');
-      }
-    }
-
-    if (userId) {
-      filter.$or = [{ userId: userId }, { isPublic: true }];
-    } else {
-      filter.isPublic = true;
-    }
+    filter.$or = [{ userId: userId }, { isPublic: true }];
 
     let projectionObj: any = {};
     if (projection) {
@@ -59,162 +55,140 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: "Document not found or you don't have permission to view it" }, { status: 404 });
     }
 
-    // Remove userId and userEmail from result if the user is not authenticated
-    if (!userId) {
-      const { userId, userEmail, ...sanitizedResult } = result;
-      return NextResponse.json({ result: sanitizedResult });
-    }
-
     return NextResponse.json({ result });
   } catch (error: any) {
-    console.error('Error in findOne API route:', error);
-    return NextResponse.json({
-      error: "An error occurred while fetching the document",
-      details: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    }, { status: 500 });
+    console.error('Error in GET API route:', error);
+    return NextResponse.json({ error: "An error occurred while fetching the document" }, { status: 500 });
   }
 }
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+  const authResponse = await authMiddleware(request);
+  if (authResponse.status === 401) {
+    return authResponse;
+  }
+
   const body = await request.json();
   const { selectedDatabase, collection, update } = body;
-  const id = params.id;
 
-  if (!selectedDatabase || !collection || !id || !update) {
+  if (!selectedDatabase || !collection || !params.id || !update) {
     return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
   }
 
   try {
     const { db } = await dbConnect(selectedDatabase);
     const coll = db.collection(collection);
+    const userId = (request as any).userId;
 
-    let userId: string | undefined;
-    try {
-      const authResponse = await authMiddleware(request);
-      if (authResponse.status !== 401) {
-        userId = (request as any).userId;
+    const { _id, ...updateData } = update;
+
+    if ('isPublic' in updateData) {
+      updateData.isPublic = updateData.isPublic === true || updateData.isPublic === 'true';
+      if (updateData.isPublic && !updateData.publicSlug) {
+        updateData.publicSlug = await generateSlug(db, updateData.title || '');
+      } else if (!updateData.isPublic) {
+        updateData.publicSlug = null;
       }
-    } catch (error) {
-      console.log('Auth failed, unable to update document');
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const result = await coll.findOneAndUpdate(
+      { _id: new ObjectId(params.id), userId },
+      { $set: updateData },
+      { returnDocument: 'after' }
+    );
 
-    // Ensure the user has permission to update this document
-    const existingDoc = await coll.findOne({ _id: new ObjectId(id), userId: userId });
-    if (!existingDoc) {
+    if (!result) {
       return NextResponse.json({ error: "Document not found or you don't have permission to update it" }, { status: 404 });
     }
 
-    // Convert isPublic to boolean if it exists in the update
-    if ('isPublic' in update) {
-      update.isPublic = update.isPublic === true || update.isPublic === 'true';
-    }
-
-    // Prepare the update operation using $set
-    const updateOperation = {
-      $set: {
-        ...update,
-        userId: userId, // Ensure userId remains unchanged
-        isPublic: update.isPublic == true || false // Update isPublic if provided, otherwise default to false
-      }
-    };
-
-    // Remove _id from the update operation if present
-    if (updateOperation.$set._id) {
-      delete updateOperation.$set._id;
-    }
-
-    const result = await coll.updateOne(
-      { _id: new ObjectId(id) },
-      updateOperation
-    );
-
-    return NextResponse.json({ 
-      result: { 
-        acknowledged: result.acknowledged,
-        modifiedCount: result.modifiedCount,
-        upsertedId: result.upsertedId,
-        upsertedCount: result.upsertedCount,
-        matchedCount: result.matchedCount,
-      }
-    });
+    return NextResponse.json({ result });
   } catch (error: any) {
-    console.error('Error in updateOne API route:', error);
-    return NextResponse.json({
-      error: "An error occurred while updating the document",
-      details: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    }, { status: 500 });
+    console.error('Error in PUT API route:', error);
+    return NextResponse.json({ error: "An error occurred while updating the document" }, { status: 500 });
   }
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
-  const body = await request.json();
-  const { selectedDatabase, collection } = body;
-  const id = params.id;
+  const authResponse = await authMiddleware(request);
+  if (authResponse.status === 401) {
+    return authResponse;
+  }
 
-  if (!selectedDatabase || !collection || !id) {
+  const { searchParams } = new URL(request.url);
+  const selectedDatabase = searchParams.get('selectedDatabase');
+  const collection = searchParams.get('collection');
+
+  if (!selectedDatabase || !collection || !params.id) {
     return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
   }
 
   try {
     const { db } = await dbConnect(selectedDatabase);
     const coll = db.collection(collection);
+    const userId = (request as any).userId;
 
-    let userId: string | undefined;
-    try {
-      const authResponse = await authMiddleware(request);
-      if (authResponse.status !== 401) {
-        userId = (request as any).userId;
-      }
-    } catch (error) {
-      console.log('Auth failed, unable to delete document');
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const result = await coll.deleteOne({ _id: new ObjectId(params.id), userId });
 
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const documentFilter = { 
-      _id: new ObjectId(id),
-      $or: [{ userId: userId }, { isPublic: true }]
-    };
-
-    // First, check if the document exists and is accessible to the user
-    const document = await coll.findOne(documentFilter);
-
-    if (!document) {
+    if (result.deletedCount === 0) {
       return NextResponse.json({ error: "Document not found or you don't have permission to delete it" }, { status: 404 });
     }
 
-    // If the document is public but not owned by the user, don't allow deletion
-    if (document.isPublic && document.userId !== userId) {
-      return NextResponse.json({ error: "You don't have permission to delete this public document" }, { status: 403 });
-    }
-
-    // Perform the delete operation
-    const result = await coll.deleteOne({ _id: new ObjectId(id), userId: userId });
-
-    if (result.deletedCount === 0) {
-      return NextResponse.json({ error: "Failed to delete the document" }, { status: 500 });
-    }
-
-    return NextResponse.json({ 
-      result: { 
-        acknowledged: result.acknowledged,
-        deletedCount: result.deletedCount
-      }
-    });
+    return NextResponse.json({ message: "Document deleted successfully" });
   } catch (error: any) {
-    console.error('Error in deleteOne API route:', error);
+    console.error('Error in DELETE API route:', error);
+    return NextResponse.json({ error: "An error occurred while deleting the document" }, { status: 500 });
+  }
+}
+
+// Duplicate Doc
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+  const authResponse = await authMiddleware(request);
+  if (authResponse.status === 401) {
+    return authResponse;
+  }
+
+  const body = await request.json();
+  const { selectedDatabase, collection, config } = body;
+
+  if (!selectedDatabase || !collection || !params.id || !config) {
+    return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
+  }
+
+  try {
+    const { db } = await dbConnect(selectedDatabase);
+    const coll = db.collection(collection);
+    const userId = (request as any).userId;
+
+    const originalDocument = await coll.findOne({ _id: new ObjectId(params.id), userId });
+
+    if (!originalDocument) {
+      return NextResponse.json({ error: "Original document not found or you don't have permission to copy it" }, { status: 404 });
+    }
+
+    const { _id, ...documentToDuplicate } = originalDocument;
+
+    // Determine the title field based on the config
+    const titleField = config.searchResultsSuggestionsField || 'title';
+    const originalTitle = documentToDuplicate[titleField] || 'Untitled';
+
+    const newDocument = {
+      ...documentToDuplicate,
+      [titleField]: `${originalTitle} (COPY)`, // Add (COPY) to the title
+      userId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isPublic: false,
+      publicSlug: undefined
+    };
+
+    const result = await coll.insertOne(newDocument);
+    const insertedDocument = await coll.findOne({ _id: result.insertedId });
+    
+    return NextResponse.json({ result: insertedDocument });
+  } catch (error: any) {
+    console.error('Error in duplicateDocument API route:', error);
     return NextResponse.json({
-      error: "An error occurred while deleting the document",
+      error: "An error occurred while duplicating the document",
       details: error.message,
       stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     }, { status: 500 });

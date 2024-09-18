@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { search } from '@/lib/services';
+import { searchDocuments } from '@/lib/services';
 import { SearchResult, PaginatedResponse, SearchConfig } from '@/types/search';
 import { styled, useTheme } from '@mui/material/styles';
 import InputBase from '@mui/material/InputBase';
@@ -114,7 +114,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ config }) => {
     const debounceSearch = setTimeout(() => {
       if (query.length >= config.minSearchLength) {
         console.log('Initiating search with:', { query, configType, config });
-        search(config, query, 1, config.maxSuggestions, configType)
+        searchDocuments(config, query, 1, config.maxSuggestions, configType)
           .then((searchResults: PaginatedResponse) => {
             console.log('Search results:', searchResults);
             setResults(searchResults.results);

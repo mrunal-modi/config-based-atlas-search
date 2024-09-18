@@ -1,11 +1,12 @@
+// src/app/(view)/result/page.tsx
 "use client";
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useUser } from '@auth0/nextjs-auth0/client';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { search, _deleteOne, _insertOne } from '@/lib/services';
-import { SearchConfig, SearchResult, PaginatedResponse, InsertOneResult } from '@/types/search';
+import { searchDocuments, deleteDocument, duplicateDocument } from '@/lib/services';
+import { SearchResult, PaginatedResponse } from '@/types/search';
 import searchConfigs, { ConfigType } from '@/config/searchConfigs';
 import {
   Container,
@@ -102,7 +103,7 @@ function SearchResultsContent() {
         try {
           setLoading(true);
           setError(null);
-          const searchResults = await search(config, query, page, config.defaultPageSize, configType);
+          const searchResults = await searchDocuments(config, query, page, config.defaultPageSize, configType);
           setResults(searchResults);
         } catch (error) {
           setError('An error occurred while fetching search results');
@@ -125,7 +126,7 @@ function SearchResultsContent() {
     }
     if (window.confirm('Are you sure you want to delete this document?')) {
       try {
-        await _deleteOne(config, id);
+        await deleteDocument(config, id);
         if (results) {
           const updatedResults = {
             ...results,
@@ -147,22 +148,19 @@ function SearchResultsContent() {
       return;
     }
     try {
-      const { _id, ...documentToCopy } = result;
-      const titleField = config.searchResultsSummaryFields[0] || 'title';
-      documentToCopy[titleField] = `${documentToCopy[titleField]} (COPY)`;
-      const insertResult: InsertOneResult = await _insertOne(config, documentToCopy);
-
-      if (results && insertResult.insertedId) {
-        const newResultItem = {
-          ...documentToCopy,
-          [config.idField]: insertResult.insertedId
-        };
-        const updatedResults = {
-          ...results,
-          results: [newResultItem, ...results.results],
-          totalCount: results.totalCount + 1
-        };
-        setResults(updatedResults);
+      const newDocument = await duplicateDocument(config, result[config.idField]);
+      if (newDocument && newDocument[config.idField]) {
+        if (results) {
+          const updatedResults = {
+            ...results,
+            results: [newDocument, ...results.results],
+            totalCount: results.totalCount + 1
+          };
+          setResults(updatedResults);
+        }
+        console.log('Document copied successfully');
+      } else {
+        setError('Failed to create a copy of the document');
       }
     } catch (error) {
       console.error('Error copying document:', error);
