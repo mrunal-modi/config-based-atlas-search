@@ -31,7 +31,7 @@ export const getDocument = async (config: SearchConfig, id: string): Promise<Sea
       selectedDatabase: config.database,
       collection: config.collection,
       idField: config.idField,
-      projection: config.findOneDetailFields.join(',')
+      projection: JSON.stringify(config.findOneDetailFields.reduce((acc, field) => ({ ...acc, [field]: 1 }), {}))
     }
   });
   return response.data.result;

@@ -13,11 +13,6 @@ import { authMiddleware } from '@/lib/authMiddleware';
 import { generateSlug } from '@/utils/slugGenerator';
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-  const authResponse = await authMiddleware(request);
-  if (authResponse.status === 401) {
-    return authResponse;
-  }
-
   const { searchParams } = new URL(request.url);
   const selectedDatabase = searchParams.get('selectedDatabase');
   const collection = searchParams.get('collection');
@@ -31,7 +26,6 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   try {
     const { db } = await dbConnect(selectedDatabase);
     const coll = db.collection(collection);
-    const userId = (request as any).userId;
 
     let filter: any = {};
     if (idField === '_id') {
@@ -39,17 +33,19 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     } else {
       filter[idField] = params.id;
     }
-    filter.$or = [{ userId: userId }, { isPublic: true }];
 
-    let projectionObj: any = {};
-    if (projection) {
-      projectionObj = projection.split(',').reduce((acc: any, field) => {
-        acc[field] = 1;
-        return acc;
-      }, {});
+    // First, try to find a public document
+    let result = await coll.findOne({ ...filter, isPublic: true }, { projection: projection ? JSON.parse(projection) : {} });
+
+    // If no public document is found, check for authentication and user-specific document
+    if (!result) {
+      const authResponse = await authMiddleware(request);
+      if (authResponse.status === 401) {
+        return NextResponse.json({ error: "Document not found or you don't have permission to view it" }, { status: 404 });
+      }
+      const userId = (request as any).userId;
+      result = await coll.findOne({ ...filter, userId }, { projection: projection ? JSON.parse(projection) : {} });
     }
-
-    const result = await coll.findOne(filter, { projection: projectionObj });
 
     if (!result) {
       return NextResponse.json({ error: "Document not found or you don't have permission to view it" }, { status: 404 });
