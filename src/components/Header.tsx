@@ -18,7 +18,9 @@ const StyledAppBar = styled(AppBar)(({ theme }) => ({
   color: theme.palette.text.primary,
 }));
 
-const StyledLink = styled(Typography)(({ theme }) => ({
+const StyledLink = styled(Typography, {
+  shouldForwardProp: (prop) => prop !== 'component',
+})<{ component?: React.ElementType }>(({ theme }) => ({
   color: theme.palette.text.primary,
   textDecoration: 'none',
   fontSize: '13px',
