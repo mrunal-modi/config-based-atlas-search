@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { search } from '@/lib/services';
 import { SearchResult, PaginatedResponse, SearchConfig } from '@/types/search';
-import { styled } from '@mui/material/styles';
+import { styled, useTheme } from '@mui/material/styles';
 import InputBase from '@mui/material/InputBase';
 import SearchIcon from '@mui/icons-material/Search';
 import Paper from '@mui/material/Paper';
@@ -12,7 +12,6 @@ import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { useTheme } from '@mui/material/styles';
 import searchConfigs, { ConfigType } from '@/config/searchConfigs';
 
 interface SearchBarProps {
@@ -22,8 +21,8 @@ interface SearchBarProps {
 const Search = styled('div')(({ theme }) => ({
   position: 'relative',
   borderRadius: '30px',
-  backgroundColor: '#fff',
-  border: '2px solid #00674A',
+  backgroundColor: theme.palette.background.paper,
+  border: `2px solid ${theme.palette.primary.main}`,
   boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
   marginTop: '16px',
   marginBottom: '80px',
@@ -33,7 +32,7 @@ const Search = styled('div')(({ theme }) => ({
   alignItems: 'center',
   margin: '16px auto 80px',
   [theme.breakpoints.down('sm')]: {
-    maxWidth: '90%', // Reduce width on mobile
+    maxWidth: '90%',
     marginTop: '8px',
     marginBottom: '40px',
   },
@@ -49,22 +48,23 @@ const SearchIconWrapper = styled('div')(({ theme }) => ({
   alignItems: 'center',
   justifyContent: 'center',
   cursor: 'pointer',
+  color: theme.palette.primary.main,
   [theme.breakpoints.down('sm')]: {
-    padding: '0 12px', // Slightly reduce padding on mobile
+    padding: '0 12px',
   },
 }));
 
 const StyledInputBase = styled(InputBase)(({ theme }) => ({
-  color: 'inherit',
+  color: theme.palette.text.primary,
   width: '100%',
   '& .MuiInputBase-input': {
     padding: '12px 16px',
     paddingRight: '48px',
     width: '100%',
     fontSize: 16,
-    fontFamily: 'arial, sans-serif',
+    fontFamily: theme.typography.fontFamily,
     [theme.breakpoints.down('sm')]: {
-      fontSize: 14, // Slightly reduce font size on mobile
+      fontSize: 14,
       padding: '10px 14px',
       paddingRight: '40px',
     },
@@ -81,8 +81,9 @@ const SuggestionsList = styled(Paper)(({ theme }) => ({
   overflow: 'auto',
   borderRadius: 8,
   boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+  backgroundColor: theme.palette.background.paper,
   [theme.breakpoints.down('sm')]: {
-    maxHeight: 300, // Reduce max height on mobile
+    maxHeight: 300,
   },
 }));
 
@@ -197,7 +198,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ config }) => {
         onKeyDown={handleKeyDown}
       />
       <SearchIconWrapper onClick={() => handleSubmit()}>
-        <SearchIcon style={{ color: '#00674A' }} />
+        <SearchIcon />
       </SearchIconWrapper>
       {isOpen && (
         <SuggestionsList elevation={3}>
@@ -210,15 +211,16 @@ const SearchBar: React.FC<SearchBarProps> = ({ config }) => {
                     selected={index === selectedIndex}
                     sx={{
                       '&:hover, &.Mui-selected': {
-                        backgroundColor: '#f5f5f5',
+                        backgroundColor: theme.palette.action.hover,
                       },
                     }}
                   >
                     <ListItemText 
                       primary={result[config.searchResultsSuggestionsField]}
                       primaryTypographyProps={{
-                        fontFamily: 'arial, sans-serif',
+                        fontFamily: theme.typography.fontFamily,
                         fontSize: isMobile ? 14 : 16,
+                        color: theme.palette.text.primary,
                       }}
                     />
                   </ListItemButton>
@@ -229,9 +231,9 @@ const SearchBar: React.FC<SearchBarProps> = ({ config }) => {
                 <ListItemText 
                   primary="No results found"
                   primaryTypographyProps={{
-                    fontFamily: 'arial, sans-serif',
+                    fontFamily: theme.typography.fontFamily,
                     fontSize: isMobile ? 14 : 16,
-                    color: '#666',
+                    color: theme.palette.text.secondary,
                   }}
                 />
               </ListItem>

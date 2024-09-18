@@ -1,18 +1,18 @@
-// Footer.tsx
 "use client";
 
 import React from 'react';
 import { Box, Container, Typography } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { styled, useTheme } from '@mui/material/styles';
 
-const StyledFooter = styled('footer')({
-  backgroundColor: 'var(--theme-background-color)',
-  color: '#ffffff',
+const StyledFooter = styled('footer')(({ theme }) => ({
+  backgroundColor: theme.palette.primary.main,
+  color: theme.palette.primary.contrastText,
   fontSize: '14px',
-  fontFamily: 'arial, sans-serif',
-});
+  fontFamily: theme.typography.fontFamily,
+}));
 
 const Footer: React.FC = () => {
+  const theme = useTheme();
   const currentYear = new Date().getFullYear();
 
   return (

@@ -1,15 +1,30 @@
 'use client';
 import React, { useState } from 'react';
-import { Tabs, Tab, Box } from '@mui/material';
+import { Tabs, Tab, Box, ThemeProvider } from '@mui/material';
+import { styled } from '@mui/material/styles';
 import SearchBar from '@/components/SearchBar';
 import BannerImage from '@/components/BannerImage';
 import searchConfigs from '@/config/searchConfigs';
+import theme from '@/styles/theme'; // Import the centralized theme
 
 interface TabPanelProps {
   children?: React.ReactNode;
   index: number;
   value: number;
 }
+
+const StyledTabs = styled(Tabs)(({ theme }) => ({
+  '& .MuiTabs-indicator': {
+    backgroundColor: theme.palette.primary.main,
+  },
+}));
+
+const StyledTab = styled(Tab)(({ theme }) => ({
+  color: theme.palette.text.primary,
+  '&.Mui-selected': {
+    color: theme.palette.primary.main,
+  },
+}));
 
 function TabPanel(props: TabPanelProps) {
   const { children, value, index, ...other } = props;
@@ -51,36 +66,46 @@ export default function SearchPage() {
   };
 
   return (
-    <Box sx={{ width: '100%', maxWidth: '1200px', margin: '0 auto', padding: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <BannerImage
-        src="/SearchQueryImage.png"
-        alt="Atlas Search"
-        width={200}
-        height={200}
-      />
-      <Box sx={{ width: '100%', maxWidth: '800px', mt: 4 }}>
-        <Box>
-          <Tabs 
-            value={value} 
-            onChange={handleChange} 
-            aria-label="search categories"
-            centered
-            sx={{ 
-              '& .MuiTabs-flexContainer': { justifyContent: 'center' },
-              '& .MuiTabs-indicator': { backgroundColor: '#1976d2' } // Keeps the indicator line
-            }}
-          >
-            {categories.map((category, index) => (
-              <Tab key={category.name} label={category.name} {...a11yProps(index)} />
-            ))}
-          </Tabs>
+    <ThemeProvider theme={theme}>
+      <Box sx={{
+        width: '100%',
+        maxWidth: '1200px',
+        margin: '0 auto',
+        padding: 4,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        bgcolor: 'background.default',
+      }}>
+        <BannerImage
+          src="/SearchQueryImage.png"
+          alt="Atlas Search"
+          width={200}
+          height={200}
+        />
+        <Box sx={{ width: '100%', maxWidth: '800px', mt: 4 }}>
+          <Box>
+            <StyledTabs
+              value={value}
+              onChange={handleChange}
+              aria-label="search categories"
+              centered
+              sx={{
+                '& .MuiTabs-flexContainer': { justifyContent: 'center' },
+              }}
+            >
+              {categories.map((category, index) => (
+                <StyledTab key={category.name} label={category.name} {...a11yProps(index)} />
+              ))}
+            </StyledTabs>
+          </Box>
+          {categories.map((category, index) => (
+            <TabPanel key={category.name} value={value} index={index}>
+              <SearchBar config={category.config} />
+            </TabPanel>
+          ))}
         </Box>
-        {categories.map((category, index) => (
-          <TabPanel key={category.name} value={value} index={index}>
-            <SearchBar config={category.config} />
-          </TabPanel>
-        ))}
       </Box>
-    </Box>
+    </ThemeProvider>
   );
 }

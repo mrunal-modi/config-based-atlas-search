@@ -18,13 +18,12 @@ import {
   CircularProgress,
   Pagination,
   PaginationItem,
-  TypographyProps,
   IconButton,
   Tooltip,
   Alert,
   Chip,
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { styled, useTheme } from '@mui/material/styles';
 import {
   Delete as DeleteIcon,
   FileCopy as CopyIcon,
@@ -38,52 +37,57 @@ const StyledLink = styled(Link)(({ theme }) => ({
   display: 'block',
   width: '100%',
   '&:hover': {
-    backgroundColor: 'rgba(var(--theme-background-color-rgb), 0.04)',
+    backgroundColor: theme.palette.action.hover,
   },
 }));
 
 const StyledListItem = styled(ListItem)(({ theme }) => ({
-  marginBottom: theme.spacing(0.8),
+  marginBottom: theme.spacing(1),
   padding: 0,
   borderRadius: theme.shape.borderRadius,
-  border: '1px solid var(--theme-border-color)',
+  border: `1px solid ${theme.palette.divider}`,
   overflow: 'hidden',
 }));
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(0.8),
+  padding: theme.spacing(2),
   width: '100%',
   height: '100%',
   boxSizing: 'border-box',
 }));
 
-const StyledTypography = styled(Typography)<TypographyProps>({
-  color: 'var(--theme-background-color)',
-  fontSize: '1rem', // Reduced font size for content titles
-  fontWeight: 600, // Make it slightly bold to stand out
-});
-
-const StyledBodyTypography = styled(Typography)({
-  fontSize: '0.8rem', // Small font size for body text
-});
-
-const StyledTitleTypography = styled(Typography)(({ theme }) => ({
-  fontSize: '0.9rem',
-  marginBottom: theme.spacing(1),
+const StyledTypography = styled(Typography, {
+  shouldForwardProp: (prop) => prop !== 'component',
+})<{ component?: React.ElementType }>(({ theme }) => ({
+  color: theme.palette.text.primary,
+  fontSize: '1rem',
+  fontWeight: 600,
 }));
 
-const StyledButton = styled(Button)({
-  backgroundColor: 'var(--theme-background-color)',
-  color: 'white',
+const StyledBodyTypography = styled(Typography)(({ theme }) => ({
+  fontSize: '0.875rem',
+  color: theme.palette.text.secondary,
+}));
+
+const StyledTitleTypography = styled(Typography)(({ theme }) => ({
+  fontSize: '1.125rem',
+  marginBottom: theme.spacing(1),
+  color: theme.palette.primary.main,
+}));
+
+const StyledButton = styled(Button)(({ theme }) => ({
+  backgroundColor: theme.palette.primary.main,
+  color: theme.palette.primary.contrastText,
   '&:hover': {
-    backgroundColor: 'var(--theme-border-color)',
+    backgroundColor: theme.palette.primary.dark,
   },
-});
+}));
 
 function SearchResultsContent() {
   const { user, isLoading: userLoading } = useUser();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const theme = useTheme();
   const configType = searchParams.get('configType') as ConfigType;
   const config = searchConfigs[configType];
   const query = searchParams?.get(config.searchQueryParam);
@@ -183,7 +187,7 @@ function SearchResultsContent() {
     return String(value);
   };
 
-  if (loading || userLoading) return <CircularProgress sx={{ color: 'var(--theme-background-color)' }} />;
+  if (loading || userLoading) return <CircularProgress sx={{ color: theme.palette.primary.main }} />;
   if (error) return <Alert severity="error">{error}</Alert>;
   if (!query) return <Typography>No search query provided</Typography>;
   if (!results || !results.results || results.results.length === 0) return <Typography>No results found for &quot;{query}&quot;</Typography>;
@@ -199,7 +203,6 @@ function SearchResultsContent() {
         </StyledBodyTypography>
         <List>
           {results.results.map((result) => (
-
             <StyledListItem key={result[config.idField]}>
               <StyledLink href={`${config.searchResultDetailPath.replace(':id', result[config.idField])}?configType=${configType}`}>
                 <StyledPaper elevation={0}>
@@ -216,29 +219,14 @@ function SearchResultsContent() {
                             size="small"
                             sx={{
                               mr: 1,
-                              backgroundColor: 'var(--theme-background-color)',
-                              color: 'white',
+                              backgroundColor: theme.palette.primary.main,
+                              color: theme.palette.primary.contrastText,
                               '& .MuiChip-icon': {
                                 color: 'white',
                               },
                             }}
                           />
                         </Tooltip>
-                      )}
-
-                      {user && (
-                        <>
-                          <Tooltip title="Copy document">
-                            <IconButton onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleCopy(result); }} size="small">
-                              <CopyIcon fontSize="small" sx={{ color: 'var(--theme-background-color)' }} />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Delete document">
-                            <IconButton onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDelete(result[config.idField]); }} size="small">
-                              <DeleteIcon fontSize="small" sx={{ color: 'var(--theme-background-color)' }} />
-                            </IconButton>
-                          </Tooltip>
-                        </>
                       )}
 
                       {result.userEmail && (
@@ -251,28 +239,41 @@ function SearchResultsContent() {
                               window.location.href = `mailto:${result.userEmail}`;
                             }}
                           >
-                            <EmailIcon fontSize="small" sx={{ color: 'var(--theme-background-color)' }} />
+                            <EmailIcon fontSize="small" sx={{ color: theme.palette.primary.main }} />
                           </IconButton>
                         </Tooltip>
+                      )}
+
+                      {user && (
+                        <>
+                          <Tooltip title="Copy document">
+                            <IconButton onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleCopy(result); }} size="small">
+                              <CopyIcon fontSize="small" sx={{ color: theme.palette.primary.main }} />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Delete document">
+                            <IconButton onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDelete(result[config.idField]); }} size="small">
+                              <DeleteIcon fontSize="small" sx={{ color: theme.palette.error.main }} />
+                            </IconButton>
+                          </Tooltip>
+                        </>
                       )}
 
                     </Box>
                   </Box>
                   {config.searchResultsSummaryFields.slice(1).map((field) => (
-  <Box key={field} mb={0.5}>
-    <StyledBodyTypography variant="body2" sx={{ color: 'var(--theme-background-color)', fontWeight: 600 }}>
-      {field}:
-    </StyledBodyTypography>
-    <StyledBodyTypography variant="body2">
-      {renderFieldValue(result, field)}
-    </StyledBodyTypography>
-  </Box>
-))}
+                    <Box key={field} mb={0.5}>
+                      <StyledBodyTypography variant="body2" sx={{ fontWeight: 600 }}>
+                        {field}:
+                      </StyledBodyTypography>
+                      <StyledBodyTypography variant="body2">
+                        {renderFieldValue(result, field)}
+                      </StyledBodyTypography>
+                    </Box>
+                  ))}
                 </StyledPaper>
               </StyledLink>
             </StyledListItem>
-
-
           ))}
         </List>
         <Box display="flex" justifyContent="center" mt={4}>

@@ -18,9 +18,9 @@ import {
   Divider,
   Container,
   Alert,
-  styled,
   Tooltip
 } from '@mui/material';
+import { styled, useTheme } from '@mui/material/styles';
 import {
   Save as SaveIcon,
   Edit as EditIcon,
@@ -62,8 +62,9 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 }
 
 function ErrorFallback() {
+  const theme = useTheme();
   return (
-    <Box sx={{ p: 3, color: 'error.main' }}>
+    <Box sx={{ p: 3, color: theme.palette.error.main }}>
       <Typography variant="h6">Error</Typography>
       <Typography>An unexpected error occurred. Please try again later.</Typography>
     </Box>
@@ -71,20 +72,23 @@ function ErrorFallback() {
 }
 
 const StyledButton = styled(Button)(({ theme }) => ({
-  backgroundColor: 'var(--theme-background-color)',
+  backgroundColor: theme.palette.primary.main,
+  color: theme.palette.primary.contrastText,
   '&:hover': {
-    backgroundColor: 'var(--theme-border-color)',
+    backgroundColor: theme.palette.primary.dark,
   },
 }));
 
 const StyledIconButton = styled(IconButton)(({ theme }) => ({
-  color: 'var(--theme-background-color)',
+  color: theme.palette.primary.main,
   '&:hover': {
-    backgroundColor: 'rgba(var(--theme-background-color-rgb), 0.04)',
+    backgroundColor: theme.palette.action.hover,
   },
 }));
 
 const RenderField: React.FC<{ field: string; value: any; isEditing: boolean; onEdit: (field: string, value: any) => void }> = ({ field, value, isEditing, onEdit }) => {
+  const theme = useTheme();
+
   if (value === null || value === undefined) {
     return <Typography variant="body2">N/A</Typography>;
   }
@@ -115,7 +119,7 @@ const RenderField: React.FC<{ field: string; value: any; isEditing: boolean; onE
       <Box>
         {Object.entries(value).map(([key, val]) => (
           <Box key={key} sx={{ mb: 1 }}>
-            <Typography variant="subtitle2" component="span" sx={{ color: 'var(--theme-background-color)', fontWeight: 600 }}>{key}:</Typography>
+            <Typography variant="subtitle2" component="span" sx={{ color: theme.palette.primary.main, fontWeight: 600 }}>{key}:</Typography>
             <RenderField
               field={`${field}.${key}`}
               value={val}
@@ -146,6 +150,7 @@ const RenderField: React.FC<{ field: string; value: any; isEditing: boolean; onE
 };
 
 function DetailResultPageContent() {
+  const theme = useTheme();
   const router = useRouter();
   const searchParams = useSearchParams();
   const params = useParams();
@@ -319,7 +324,7 @@ function DetailResultPageContent() {
           component="h1" 
           align="center" 
           gutterBottom
-          sx={{ color: 'var(--theme-background-color)' }}
+          sx={{ color: theme.palette.primary.main }}
         >
           Document Details
         </Typography>
@@ -374,7 +379,7 @@ function DetailResultPageContent() {
     
               return (
                 <Grid item xs={12} key={field}>
-                  <Typography variant="subtitle1" sx={{ color: 'var(--theme-background-color)', fontWeight: 600 }}>{field}:</Typography>
+                  <Typography variant="subtitle1" sx={{ color: theme.palette.primary.main, fontWeight: 600 }}>{field}:</Typography>
                   {isTitleField ? (
                     isEditing ? (
                       <TextField

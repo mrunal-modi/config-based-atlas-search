@@ -1,11 +1,10 @@
-// Header.tsx
 "use client";
 
 import React from 'react';
 import NextLink from 'next/link';
 import { useUser } from '@auth0/nextjs-auth0/client';
-import { AppBar, Toolbar, Button, Box, Avatar } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { AppBar, Toolbar, Button, Box, Avatar, Typography } from '@mui/material';
+import { styled, useTheme } from '@mui/material/styles';
 import { LogIn, LogOut } from 'lucide-react';
 
 interface Auth0User {
@@ -15,11 +14,11 @@ interface Auth0User {
 }
 
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
-  backgroundColor: 'white',
+  backgroundColor: theme.palette.background.paper,
   color: theme.palette.text.primary,
 }));
 
-const StyledLink = styled('a')(({ theme }) => ({
+const StyledLink = styled(Typography)(({ theme }) => ({
   color: theme.palette.text.primary,
   textDecoration: 'none',
   fontSize: '13px',
@@ -29,6 +28,7 @@ const StyledLink = styled('a')(({ theme }) => ({
   alignItems: 'center',
   '&:hover': {
     textDecoration: 'underline',
+    color: theme.palette.primary.main,
   },
 }));
 
@@ -43,15 +43,18 @@ const StyledAvatar = styled(Avatar)(({ theme }) => ({
   marginRight: theme.spacing(1),
 }));
 
-const StyledButton = styled(Button)({
-  color: '#00674A',
+const StyledButton = styled(Button, {
+  shouldForwardProp: (prop) => prop !== 'component',
+})<{ component?: React.ElementType }>(({ theme }) => ({
+  color: theme.palette.primary.main,
   '&:hover': {
-    backgroundColor: 'rgba(0, 103, 74, 0.04)',
+    backgroundColor: theme.palette.action.hover,
   },
-}) as typeof Button;  // This allows StyledButton to accept all props that Button accepts
+}));
 
 const Header: React.FC = () => {
   const { user, error, isLoading } = useUser();
+  const theme = useTheme();
 
   const auth0User = user as Auth0User | undefined;
 
@@ -60,10 +63,10 @@ const Header: React.FC = () => {
       <Toolbar>
         <Box display="flex" flexGrow={1}>
           <NextLink href="/" passHref legacyBehavior>
-            <StyledLink>Home</StyledLink>
+            <StyledLink variant="body2" component="a">Home</StyledLink>
           </NextLink>
           <NextLink href="https://www.myexampleapp.com/public-documents/next-js-config-based-mongodb-atlas-search-example" passHref legacyBehavior>
-            <StyledLink>Documentation</StyledLink>
+            <StyledLink variant="body2" component="a">Documentation</StyledLink>
           </NextLink>
         </Box>
         <UserSection>
