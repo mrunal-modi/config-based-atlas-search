@@ -67,7 +67,7 @@ const Header: React.FC = () => {
           <NextLink href="/" passHref legacyBehavior>
             <StyledLink variant="body2" component="a">Home</StyledLink>
           </NextLink>
-          <NextLink href="https://www.myexampleapp.com/public-documents/next-js-config-based-mongodb-atlas-search-example" passHref legacyBehavior>
+          <NextLink href="https://www.myexampleapp.com/documents/view/66fd303ea14b0e7c350ee3e6" passHref legacyBehavior>
             <StyledLink variant="body2" component="a">Documentation</StyledLink>
           </NextLink>
         </Box>
