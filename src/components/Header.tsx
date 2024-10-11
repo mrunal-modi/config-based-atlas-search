@@ -64,7 +64,7 @@ const Header: React.FC = () => {
     <StyledAppBar position="static" elevation={0}>
       <Toolbar>
         <Box display="flex" flexGrow={1}>
-          <NextLink href="/" passHref legacyBehavior>
+          <NextLink href="https://mongodbmethods.com/" passHref legacyBehavior>
             <StyledLink variant="body2" component="a">Home</StyledLink>
           </NextLink>
           <NextLink href="https://www.myexampleapp.com/documents/view/66fd303ea14b0e7c350ee3e6" passHref legacyBehavior>
