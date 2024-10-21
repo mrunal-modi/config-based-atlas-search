@@ -1,4 +1,5 @@
 // src/app/(view)/result/[id]/page.tsx
+// test
 "use client";
 
 import React, { Suspense, Component, ErrorInfo, ReactNode, useState, useEffect, useMemo, useCallback } from 'react';
