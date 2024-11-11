@@ -80,8 +80,8 @@ export default function SearchPage() {
         <BannerImage
           src="/SearchQueryImage.png"
           alt="Atlas Search"
-          width={200}
-          height={200}
+          width={150}
+          height={150}
         />
         <Box sx={{ width: '100%', maxWidth: '800px', mt: 4 }}>
           <Box>
