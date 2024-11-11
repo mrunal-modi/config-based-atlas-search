@@ -1,9 +1,9 @@
 "use client";
 
 import React from 'react';
-import NextLink from 'next/link';
+import Link from 'next/link';
 import { useUser } from '@auth0/nextjs-auth0/client';
-import { AppBar, Toolbar, Button, Box, Avatar, Typography } from '@mui/material';
+import { AppBar, Toolbar, Button, Box, Avatar } from '@mui/material';
 import { styled, useTheme } from '@mui/material/styles';
 import { LogIn, LogOut } from 'lucide-react';
 
@@ -18,9 +18,7 @@ const StyledAppBar = styled(AppBar)(({ theme }) => ({
   color: theme.palette.text.primary,
 }));
 
-const StyledLink = styled(Typography, {
-  shouldForwardProp: (prop) => prop !== 'component',
-})<{ component?: React.ElementType }>(({ theme }) => ({
+const StyledLink = styled(Link)(({ theme }) => ({
   color: theme.palette.text.primary,
   textDecoration: 'none',
   fontSize: '13px',
@@ -64,12 +62,18 @@ const Header: React.FC = () => {
     <StyledAppBar position="static" elevation={0}>
       <Toolbar>
         <Box display="flex" flexGrow={1}>
-          <NextLink href="https://mongodbmethods.com/" passHref legacyBehavior>
-            <StyledLink variant="body2" component="a">Home</StyledLink>
-          </NextLink>
-          <NextLink href="https://github.com/mrunal-modi/config-based-mongodb-atlas-search-next" passHref legacyBehavior>
-            <StyledLink variant="body2" component="a">GitHub</StyledLink>
-          </NextLink>
+          <StyledLink href="/">
+            Home
+          </StyledLink>
+          <StyledLink href="https://model.mongodbmethods.com/">
+            Model
+          </StyledLink>
+          <StyledLink href="https://search.mongodbmethods.com/">
+            Search
+          </StyledLink>
+          {/* <StyledLink href="https://github.com/mrunal-modi/config-based-mongodb-atlas-search-next">
+            GitHub
+          </StyledLink> */}
         </Box>
         <UserSection>
           {!isLoading && (
